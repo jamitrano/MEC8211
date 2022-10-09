@@ -14,7 +14,7 @@ function [newStateVector] = EulerImplicitSolverStep(Dx,rightMember,constantTerm,
 rightMember = -rightMember.*dt + eye(size(rightMember));
  [rightMember,stateVector] = AddNewmannBorderCondition(rightMember,stateVector,Dx,newmannCondition);
  [stateVector,rightMember] = AddDirichletBorderCondition(stateVector,rightMember,dirichletCondition);
-newStateVector = rightMember\( stateVector);
+newStateVector = rightMember\( stateVector) - dt.*constantTerm;
 
 end
 

@@ -1,48 +1,62 @@
 %% MAIN FILE 
 % Choisir le mode de simulation
-simulationMode = 1;  % 1 : Solution numérique 
+simulationMode = 3;  % 1 : Solution numérique 
                      % 2 : Solution Analytique 
                      % 3 : Comparaison Numérique/ Analytique 
-N = 100 ; % Nn Node 
+
+% Choix des parametres                     
+N = 100 ; % Number of  Node 
+rangeNode = [5,1e4]; % pour comparaison
 diameter = 1; %m
 stateVector = zeros(N,1); % vecteur d'etat 
 radiusVector = (1:N)/N*diameter/2;
-ratioCoeff = 10e-10; %m2/an
-reactionConstant = 0;%4e-9 ; % 1/an
-sourceTerm = 0;%10e-8 ; %mol/m3/s
+ratioCoeff = 10e-10; %m2/s
+reactionConstant = 0;%4e-9 ; % 1/s
+sourceTerm = 10e-8 .*ones(N,1) ; %mol/m3/s
 initialConcentration = 10 ; % mol/m3
 newmannBorderCondition = [1,0];
 dirichletCondition = [N,initialConcentration];
-dx = 1 ;%diameter/2/N;
-dt = 1e7; %an
-n = length(stateVector);
-Dx=FirstDerivateSpaceMatrix(n,dx);
-switch simulationMode
-    case 1
-[rightMemberMatrix,constantTerm] = DifferentialEquationRightMember(stateVector,dx,ratioCoeff,reactionConstant,sourceTerm,newmannBorderCondition);
+finalTime = 5e8 ; %s
+numberOfTimeIter = 1e3 ;
+
+close all
+if  (simulationMode == 2 || simulationMode == 3)
+    %% Solution Analytique
+[analyticResult] = AnalyticSolution(sourceTerm,diameter/2,initialConcentration,ratioCoeff,radiusVector);
+if  (simulationMode == 2)
+plot(radiusVector,analyticResult);
+end
+end
+if (simulationMode == 1 || simulationMode == 3)
+%% Calcul généraux 
+dt = finalTime/numberOfTimeIter;
+dx = diameter/2/N;
+Dx=FirstDerivateSpaceMatrix(N,dx);
+Dxx = SecondDerivateSpaceMatrix(N,dx);
+[rightMemberMatrix] = DifferentialEquationRightMember(Dx,Dxx,N,dx,ratioCoeff,reactionConstant);
 
 %% Loop 
-t = 0:dt:1e8; %an
+t = 0:dt:finalTime; %s
 nbIter = length(t);
 result = zeros(length(stateVector),nbIter);
 for i = 1:nbIter
-stateVector = EulerImplicitSolverStep(Dx,rightMemberMatrix,constantTerm,dt,stateVector,dirichletCondition,newmannBorderCondition);
+stateVector = EulerImplicitSolverStep(Dx,rightMemberMatrix,sourceTerm,dt,stateVector,dirichletCondition,newmannBorderCondition);
 result(:,i) = stateVector;
 end
-
-%% Display ( a completer ) 
+if (simulationMode == 1 )
+%% Display 
 [x,y ] = meshgrid(t,(1:N).*dx);
 figure;
 fig =mesh(x,y,result);
 title('Titre');
-xlabel('Temps (année)');
+xlabel('Temps (s)');
 ylabel('Distance');
 zlabel('Concentration');
 figure 
 plot(radiusVector,result(:,end))
-    case 2 
+elseif  (simulationMode == 3 )   
 
-%% Solution Analytique
-[C] = AnalyticSolution(sourceTerm,diameter/2,initialConcentration,ratioCoeff,radiusVector);
-plot(radiusVector,C);
+
+
+end
 end
