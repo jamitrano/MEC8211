@@ -12,8 +12,9 @@ function [newStateVector] = EulerImplicitSolverStep(Dx,rightMember,constantTerm,
 % newStateVector | (N,1) vecteur d'etat modifié au temps t + dt 
 
 rightMember = -rightMember.*dt + eye(size(rightMember));
- [rightMember,stateVector] = AddNewmannBorderCondition(rightMember,stateVector,Dx,newmannCondition);
+ [rightMember,~] = AddNewmannBorderCondition(rightMember,Dx,newmannCondition);
  [stateVector,rightMember] = AddDirichletBorderCondition(stateVector,rightMember,dirichletCondition);
+stateVector(end) = 10;
 newStateVector = rightMember\( stateVector);
 
 end

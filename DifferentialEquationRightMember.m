@@ -1,4 +1,4 @@
-function [rightMemberMatrix,constantTerm] = DifferentialEquationRightMember(stateVector,dx,ratioCoeff,reactionConstant,newmannCondition)
+function [rightMemberMatrix] = DifferentialEquationRightMember(Dx,Dxx,n,dx,ratioCoeff,reactionConstant)
 %% Calcul les termes A et B de l'équation générique df/dt = Af + B via le calcul de matrice de dérivation 
 %% INPUT 
 % stateVector | (N,1) vecteur d'etat au temps t 
@@ -11,16 +11,11 @@ function [rightMemberMatrix,constantTerm] = DifferentialEquationRightMember(stat
 %% OUTPUT 
 %rightMemberMatrix | (N,N) terme A
 % constantTerm     | (N,1) terme B
-%% Calcul généraux 
-n = length(stateVector);
-Dx=FirstDerivateSpaceMatrix(n,dx);
-Dxx = SecondDerivateSpaceMatrix(n,dx);
-[Dx,Dxx,constantTerm] = AddNewmannBorderCondition(Dx,Dxx,newmannCondition);
+
 
 %% Calcul spécifique pour la Loi de Fick axisymétrique 
 Rinv = diag(1./linspace(0,n-1,n))./dx;
 Rinv(1,1) = 0; % Axysymmetry 
 rightMemberMatrix = ratioCoeff.*(Dxx + Rinv*Dx) - reactionConstant.*eye(n);
-constantTerm = Rinv.*ratioCoeff*constantTerm;
 end
 
