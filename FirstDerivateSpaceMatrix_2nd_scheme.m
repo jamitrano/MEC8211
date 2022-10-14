@@ -1,4 +1,4 @@
-function [dfdx] = FirstDerivateSpaceMatrix(n,dx)
+function [dfdx] = FirstDerivateSpaceMatrix_2nd_scheme(n,dx)
 %% INPUT 
 % n          | size of state vector (N,1) describing the system 
 % dx          | Spatial step for discretization 
