@@ -20,6 +20,7 @@ newmannBorderCondition = [1,0];
 dirichletCondition = [N,initialConcentration];
 finalTime = 5e8 ; %s
 numberOfTimeIter = 1e2 ;
+convCriteria=0.001;
 
 
 if  (simulationMode == 2 )
@@ -28,7 +29,7 @@ if  (simulationMode == 2 )
         plot(radiusVector,analyticResult);
 end
     if (simulationMode == 1 )
-         result = SolverEDP(N,finalTime,numberOfTimeIter,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
+         result = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
         %% Display
         t = 0:finalTime/numberOfTimeIter:finalTime; %s
         dx = diameter/2/N;
@@ -48,7 +49,7 @@ end
         for i = 1:lNode
             N = floor(rangeNode(i));
             dirichletCondition = [N,initialConcentration]; 
-            resultOverTime = SolverEDP(N,finalTime,numberOfTimeIter,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
+            resultOverTime = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
             radiusVector = (1:N)/N*diameter/2;
             [analyticResult] = AnalyticSolution(sourceTerm,diameter/2,initialConcentration,ratioCoeff,radiusVector);
             resultOverDx{i,1} = resultOverTime(:,end);
