@@ -9,12 +9,21 @@ sourceTerm = sourceTerm .*ones(N,1);
 [rightMemberMatrix] = DifferentialEquationRightMember(Dx,Dxx,N,dx,ratioCoeff,reactionConstant);
 
 %% Loop 
+%%Initialisation
 t = 0:dt:finalTime; %s
 nbIter = length(t);
 result = zeros(length(stateVector),nbIter);
-for i = 1:nbIter
-stateVector = EulerImplicitSolverStep(Dx,rightMemberMatrix,sourceTerm,dt,stateVector,dirichletCondition,newmannBorderCondition);
-result(:,i) = stateVector;
-end
-end
+i=1;
+result(:,i)=AddDirichletBorderCondition(stateVector,rightMemberMatrix,dirichletCondition);
+delta(i)=1;
 
+%%
+while t(i)<finalTime && delta(i)>convCriteria
+    i=i+1;
+    stateVector = EulerImplicitSolverStep(Dx,rightMemberMatrix,sourceTerm,dt,stateVector,dirichletCondition,newmannBorderCondition);
+    result(:,i) = stateVector;
+    delta(i)=max(max(abs(result(:,i-1)./result(:,i)-1)));
+    
+end
+result=result(:,1:i);
+end
