@@ -46,13 +46,31 @@ end
     if  (simulationMode == 3 )
         lNode = length(rangeNode);
         resultOverDx = cell(lNode);
+        vecteurLInf=zeros(length(rangeNode),1);
+        vecteurL1=zeros(length(rangeNode),1);
+        vecteurL2=zeros(length(rangeNode),1);
+
         for i = 1:lNode
+            i
             N = floor(rangeNode(i));
             dirichletCondition = [N,initialConcentration]; 
             resultOverTime = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
-            radiusVector = (1:N)/N*diameter/2;
+            radiusVector = ((1:N)/N*diameter/2)';
             [analyticResult] = AnalyticSolution(sourceTerm,diameter/2,initialConcentration,ratioCoeff,radiusVector);
             resultOverDx{i,1} = resultOverTime(:,end);
             resultOverDx{i,2} = analyticResult;
+
+            %Création des vecteurs L_inf, L1 et L2
+            vecteurLInf(i)=L_inf(resultOverDx{i,1},resultOverDx{i,2});
+            vecteurL1(i)=L1(resultOverDx{i,1},resultOverDx{i,2},diameter,N);
+            vecteurL2(i)=L2(resultOverDx{i,1},resultOverDx{i,2},diameter,N);
         end
+        
+        figure
+        hold on
+        loglog (rangeNode,vecteurL1, LineWidth=2)
+        loglog (rangeNode,vecteurL2,LineWidth=2)
+        loglog (rangeNode,vecteurLInf,LineWidth=2)
+        xlabel : 
+        legend('L1','L2','Linf')
     end
