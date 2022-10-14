@@ -2,7 +2,7 @@
 close all
 clear
 % Choisir le mode de simulation
-simulationMode = 3;  % 1 : Solution numérique
+simulationMode = 1;  % 1 : Solution numérique
 % 2 : Solution Analytique
 % 3 : Comparaison Numérique/ Analytique
 
@@ -14,13 +14,14 @@ diameter = 1; %m
 radiusVector = (1:N)/N*diameter/2;
 ratioCoeff = 10e-10; %m2/s
 reactionConstant = 0;%4e-9 ; % 1/s
-sourceTerm = 10e-8 ; %mol/m3/s
+sourceTerm = 1e-8 ; %mol/m3/s
 initialConcentration = 10 ; % mol/m3
 newmannBorderCondition = [1,0];
 dirichletCondition = [N,initialConcentration];
-finalTime = 5e8 ; %s
-numberOfTimeIter = 1e2 ;
-convCriteria=0.001;
+finalTime = 5e9 ; %s
+numberOfTimeIter = 1e4 ;
+dt=finalTime/numberOfTimeIter;
+convCriteria=0.00001;
 
 
 if  (simulationMode == 2 )
@@ -29,12 +30,12 @@ if  (simulationMode == 2 )
         plot(radiusVector,analyticResult);
 end
     if (simulationMode == 1 )
-         result = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
+         [result,convergence] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
         %% Display
-        t = 0:finalTime/numberOfTimeIter:finalTime; %s
+        t = 0:dt:size(result,2)*dt-1; %s
         dx = diameter/2/N;
         [x,y ] = meshgrid(t,(1:N).*dx);
-        figure;
+        figure(3);
         fig =mesh(x,y,result);
         title('Titre');
         xlabel('Temps (s)');
@@ -54,7 +55,7 @@ end
             i
             N = floor(rangeNode(i));
             dirichletCondition = [N,initialConcentration]; 
-            resultOverTime = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
+            [resultOverTime,convergence(i)] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition);
             radiusVector = ((1:N)/N*diameter/2)';
             [analyticResult] = AnalyticSolution(sourceTerm,diameter/2,initialConcentration,ratioCoeff,radiusVector);
             resultOverDx{i,1} = resultOverTime(:,end);
@@ -66,11 +67,16 @@ end
             vecteurL2(i)=L2(resultOverDx{i,1},resultOverDx{i,2},diameter,N);
         end
         
+        elementSize=0.5./floor(rangeNode);
         figure
+        loglog (elementSize,vecteurL1, LineWidth=2)
         hold on
-        loglog (rangeNode,vecteurL1, LineWidth=2)
-        loglog (rangeNode,vecteurL2,LineWidth=2)
-        loglog (rangeNode,vecteurLInf,LineWidth=2)
-        xlabel : 
+        grid on
+        loglog (elementSize,vecteurL2,LineWidth=2)
+        loglog (elementSize,vecteurLInf,LineWidth=2)
+        set(gca, 'XDir','reverse')
+        xlabel ('Distance entre les noeuds (m)')
+        ylabel('Erreur')
         legend('L1','L2','Linf')
+        title('Progression de l''erreur en fonction de la distance des noeuds')
     end

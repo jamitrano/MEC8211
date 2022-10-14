@@ -1,11 +1,11 @@
-function [result] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition)
+function [result,convergence] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition)
 %%% Calcul généraux 
 stateVector = zeros(N,1); % vecteur d'etat 
 dt = finalTime/numberOfTimeIter;
 dx = diameter/2/N;
 Dx=FirstDerivateSpaceMatrix(N,dx);
-Dxx = SecondDerivateSpaceMatrix(N,dx);
-sourceTerm = sourceTerm .*ones(N,1).*dx;
+Dxx = SecondDerivateSpaceMatrix(N,dx)./dx;
+sourceTerm = sourceTerm .*ones(N,1);
 [rightMemberMatrix] = DifferentialEquationRightMember(Dx,Dxx,N,dx,ratioCoeff,reactionConstant);
 
 %% Loop 
@@ -24,6 +24,11 @@ while t(i)<finalTime && delta(i)>convCriteria
     result(:,i) = stateVector;
     delta(i)=max(max(abs(result(:,i-1)./result(:,i)-1)));
     
+end
+if delta(i)>convCriteria
+    convergence=0;
+else
+    convergence=1;
 end
 result=result(:,1:i);
 end
