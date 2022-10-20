@@ -23,7 +23,7 @@ t = 0:dt:finalTime; %s
 nbIter = length(t);
 result = zeros(length(stateVector),nbIter);
 i=1;
-result(:,i)=AddDirichletBorderCondition(stateVector,rightMemberMatrix,dirichletCondition);
+%result(:,i)=AddDirichletBorderCondition(stateVector,rightMemberMatrix,dirichletCondition);
 delta(i)=1;
 
 %%

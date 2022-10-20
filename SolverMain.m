@@ -2,27 +2,27 @@
 close all
 clear
 % Choisir le mode de simulation
-simulationMode =3 ;  % 1 : Solution numérique
+simulationMode =1 ;  % 1 : Solution numérique
 ordre=1;
 % 2 : Solution Analytique
 % 3 : Comparaison Numérique/ Analytique
 
 % Choix des parametres
 N = 100 ; % Number of  Node
-rangeNode = linspace(5,1e3,20); % pour comparaison
+rangeNode = linspace(5,1e2,20); % pour comparaison
 diameter = 1; %m
 
-radiusVector = (1:N)/N*diameter/2;
-ratioCoeff = 10e-10; %m2/s
+radiusVector = linspace(0,diameter/2,N);
+ratioCoeff = 1e-10; %m2/s
 reactionConstant = 0;%4e-9 ; % 1/s
 sourceTerm = 1e-8 ; %mol/m3/s
 initialConcentration = 10 ; % mol/m3
 newmannBorderCondition = [1,0];
 dirichletCondition = [N,initialConcentration];
 finalTime = 5e9 ; %s
-numberOfTimeIter = 1e4 ;
+numberOfTimeIter = 1e8 ;
 dt=finalTime/numberOfTimeIter;
-convCriteria=0.00001;
+convCriteria=1e-6;
 
 
 if  (simulationMode == 2 )
@@ -64,9 +64,10 @@ end
                 resultOverDx{i,2} = analyticResult;
     
                 %Création des vecteurs L_inf, L1 et L2
+                
                 vecteurLInf(i)=L_inf(resultOverDx{i,1},resultOverDx{i,2});
-                vecteurL1(i)=L1(resultOverDx{i,1},resultOverDx{i,2},diameter,N);
-                vecteurL2(i)=L2(resultOverDx{i,1},resultOverDx{i,2},diameter,N);
+                vecteurL1(i)=L1(resultOverDx{i,1},resultOverDx{i,2},N);
+                vecteurL2(i)=L2(resultOverDx{i,1},resultOverDx{i,2},N);
             end
             
             elementSize=0.5./floor(rangeNode);

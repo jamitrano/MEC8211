@@ -1,4 +1,4 @@
-function [normL2] = L2(analyticalSol,numericalSol,diameter,N)
+function [normL2] = L2(analyticalSol,numericalSol,N)
 %L2 Summary of this function goes here
 %   Detailed explanation goes here
 

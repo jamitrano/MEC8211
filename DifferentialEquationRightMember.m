@@ -14,7 +14,7 @@ function [rightMemberMatrix] = DifferentialEquationRightMember(Dx,Dxx,n,dx,ratio
 
 
 %% Calcul spécifique pour la Loi de Fick axisymétrique 
-Rinv = diag(1./linspace(0,n-1,n))./dx;
+Rinv = diag(1./linspace(0,n,n))./dx;
 Rinv(1,1) = 0; % Axysymmetry 
 rightMemberMatrix = ratioCoeff.*(Dxx + Rinv*Dx) - reactionConstant.*eye(n);
 end
