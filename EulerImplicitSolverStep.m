@@ -16,7 +16,6 @@ stateVector = stateVector - dt.*constantTerm;
  [rightMember,stateVector] = AddNewmannBorderCondition(rightMember,stateVector,Dx,dx,newmannCondition,ordre);
  [stateVector,rightMember] = AddDirichletBorderCondition(stateVector,rightMember,dirichletCondition);
   newStateVector = rightMember\ stateVector ;
-% newStateVector = rightMember\( stateVector - dt.*constantTerm);
 
 end
 

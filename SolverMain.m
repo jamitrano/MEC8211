@@ -8,21 +8,21 @@ ordre=1;
 % 3 : Comparaison Numérique/ Analytique
 
 % Choix des parametres
-N = 100 ; % Number of  Node
+N = 20 ; % Number of  Node
 rangeNode = linspace(5,1e2,20); % pour comparaison
 diameter = 1; %m
 
 radiusVector = linspace(0,diameter/2,N);
 ratioCoeff = 1e-10; %m2/s
 reactionConstant = 0;%4e-9 ; % 1/s
-sourceTerm = 1e-8 ; %mol/m3/s
+sourceTerm =  1e-8 ; %mol/m3/s
 initialConcentration = 10 ; % mol/m3
 newmannBorderCondition = [1,0];
 dirichletCondition = [N,initialConcentration];
-finalTime = 5e9 ; %s
-numberOfTimeIter = 1e8 ;
+finalTime = 5e3 ; %s
+numberOfTimeIter = 1e6 ;
 dt=finalTime/numberOfTimeIter;
-convCriteria=1e-6;
+convCriteria=1e-7;
 
 
 if  (simulationMode == 2 )
@@ -31,19 +31,20 @@ if  (simulationMode == 2 )
         plot(radiusVector,analyticResult);
 end
     if (simulationMode == 1 )
-         [result,convergence] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
+         [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
         %% Display
-        t = 0:dt:size(result,2)*dt-1; %s
-        dx = diameter/2/N;
-        [x,y ] = meshgrid(t,(1:N).*dx);
-        figure(3);
-        fig =mesh(x,y,result);
-        title('Titre');
-        xlabel('Temps (s)');
-        ylabel('Distance');
-        zlabel('Concentration');
+%         t = 0:dt:size(result,2)*dt-1; %s
+%         dx = diameter/2/N;
+%         [x,y ] = meshgrid(t,(1:N).*dx);
+%         figure(3);
+%         fig =mesh(x,y,result);
+%         title('Titre');
+%         xlabel('Temps (s)');
+%         ylabel('Distance');
+%         zlabel('Concentration');
         figure
-        plot(radiusVector,result(:,end))
+        %plot(radiusVector,result(:,end))
+        plot(radiusVector,stationnary)
     end
     if  (simulationMode == 3 )
         for ordre=1:2
