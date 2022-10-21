@@ -2,39 +2,40 @@
 close all
 clear
 % Choisir le mode de simulation
-simulationMode =3 ;  % 1 : Solution numérique
+simulationMode =4 ;  % 1 : Solution numérique
 % 2 : Solution Analytique
 % 3 : Comparaison Numérique/ Analytique
-ordre=1;
+ordre=2;
 % Choix des parametres
-N = 20 ; % Number of  Node
-rangeNode = linspace(5,50,5); % pour comparaison
+N = 200 ; % Number of  Node
+rangeNode = linspace(5,100,5); % pour comparaison
 diameter = 1; %m
 
-finalTime = 5e4 ; %s
+finalTime = 1e5 ; %s
 dt = 1e3;
 convCriteria=1e-7;
-ratioCoeff = 1e-10; %m2/s
+MNPcriterion = 1e-9;
+Deff = 1e-10; %m2/s
 reactionConstant = 0;%4e-9 ; % 1/s
 sourceTerm = 1e-8 ; %mol/m3/s
 initialConcentration = 10 ; % mol/m3
 %% For calculations
 radius = diameter*0.5;
 radiusVector = linspace(0,radius,N);
-newmannBorderCondition = [1,0];
+newmannCondition = [1,0];
 dirichletCondition = [N,initialConcentration];
 
 numberOfTimeIter = floor(finalTime/dt) ;
 
 switch simulationMode
     case 1 %% Simulation Numérique
-        [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
+        [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre);
         plot(radiusVector,result(:,end))
         figure
         plot(radiusVector,stationnary)
 
     case 2 %% Solution Analytique
-        [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,ratioCoeff,radiusVector);
+        [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,Deff,radiusVector);
         plot(radiusVector,analyticResult);
 
     case 3
@@ -53,13 +54,13 @@ switch simulationMode
                 disp(i)
                 N = floor(rangeNode(i));
                 dirichletCondition = [N,initialConcentration];
-                [resultOverTime,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
+                [resultOverTime,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre);
                 if ~convergence
                     disp("Attention il n'a pas convergence, augmenter le temps max");
                 end
 
                 radiusVector = linspace(0,diameter/2,N);
-                [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,ratioCoeff,radiusVector);
+                [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,Deff,radiusVector);
                 resultOverDx{i,3}= stationnary;
                 resultOverDx{i,1} = resultOverTime(:,end);
                 resultOverDx{i,2} = analyticResult;
@@ -91,4 +92,30 @@ switch simulationMode
 
         title('Progression de l''erreur en fonction de la distance des noeuds')
         hold off
+    case 4 %% MNP
+        % Calcul avec maillage fin
+        [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre);
+        % fit 
+        radiusVector = linspace(0,diameter/2,N);
+        p=fit(radiusVector',stationnary,'poly3');
+        % Calcul de la difference 
+        stateVector = feval(p,radiusVector);
+        [~,L2Error,~] = ComputeError(stationnary,stateVector,N);
+        if ~(L2Error<MNPcriterion)
+            disp("L'erreur entre la courbe extrapolée et les données numériques est trop grande")
+        else 
+            %Numerical Solution to Nearby Problem
+            
+ [rightMemberMatrix,rightMemberMatrixStationnary] = ComputeRightMemberMatrix(diameter,N,Deff,reactionConstant,dt,ordre);
+sourceTerm = sourceTerm .*ones(N,1);
+ [rightMember,~] = AddNewmannBorderCondition(rightMemberMatrix,stateVector,newmannCondition,ordre);
+ [~,rightMember] = AddDirichletBorderCondition(stateVector,rightMember,dirichletCondition);
+ error = rightMemberMatrixStationnary*stateVector -sourceTerm ;
+ figure
+ plot(radiusVector,error)
+ title('Erreur par la méthode MNP')
+ xlabel('Distance au centre (m)');
+ ylabel('Erreur de discrétisation')
+        end
+
 end
