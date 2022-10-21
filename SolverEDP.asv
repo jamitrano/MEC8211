@@ -2,36 +2,28 @@ function [result,convergence,stationnary] =SolverEDP(N,finalTime,numberOfTimeIte
 %%% Calcul généraux 
 stateVector = double(zeros(N,1)); % vecteur d'etat 
 dt = finalTime/numberOfTimeIter;
-dx = diameter/2/N;
+dx = diameter/2/(N-1);
+((1:N)/N*diameter/2)';
 rInv = 1./linspace(0,N,N)./dx;
 rInv(1)=0;
 if ordre ==1
     backwardTerm = - Deff/(dx*dx).*ones(1,N);
     centralTerm = 2*Deff/(dx*dx) + Deff/dx.*rInv + 1/dt + reactionConstant;
     forwardTerm = -Deff/(dx*dx) -Deff/dx.*rInv;
-    rightMemberMatrix = diag(backwardTerm(2:N),-1) + diag(centralTerm,0) + diag(forwardTerm(1:N-1),1);
-
-    backwardTermStationnary = - Deff/(dx*dx).*ones(1,N);
-    centralTermStationnary = 2*Deff/(dx*dx) + Deff/dx.*rInv + reactionConstant;
-    forwardTermStationnary = -Deff/(dx*dx) -Deff/dx.*rInv; 
-    rightMemberMatrixStationnary = diag(backwardTerm(2:N),-1) + diag(centralTerm,0) + diag(forwardTerm(1:N-1),1);
-
+    
 end
 
 if ordre==2
-        backwardTerm = - Deff/(dx*dx).*ones(1,N);
-    centralTerm = 2*Deff/(dx*dx) + Deff/dx.*rInv + 1/dt + reactionConstant;
-    forwardTerm = -Deff/(dx*dx) -Deff/dx.*rInv;
-    rightMemberMatrix = diag(backwardTerm(2:N),-1) + diag(centralTerm,0) + diag(forwardTerm(1:N-1),1);
-
-    backwardTermStationnary = - Deff/(dx*dx).*ones(1,N);
-    centralTermStationnary = 2*Deff/(dx*dx) + Deff/dx.*rInv + reactionConstant;
-    forwardTermStationnary = -Deff/(dx*dx) -Deff/dx.*rInv; 
-    rightMemberMatrixStationnary = diag(backwardTerm(2:N),-1) + diag(centralTerm,0) + diag(forwardTerm(1:N-1),1);
+     backwardTerm = - Deff/(dx*dx).*ones(1,N) + Deff/(2*dx).*rInv;
+    centralTerm = (2*Deff/(dx*dx)  + 1/dt + reactionConstant).*ones(1,N);
+    forwardTerm = -Deff/(dx*dx) -Deff/(2*dx).*rInv;
 end
+rightMemberMatrix = diag(backwardTerm(2:N),-1) + diag(centralTerm,0) + diag(forwardTerm(1:N-1),1);
 
+ centralTermStationnary = centralTerm - 1/dt ;
+rightMemberMatrixStationnary = diag(backwardTerm(2:N),-1) + diag(centralTermStationnary,0) + diag(forwardTerm(1:N-1),1);
 sourceTerm = sourceTerm .*ones(N,1);
-%stationnary = ComputeStationnary(rightMemberMatrix,sourceTerm,stateVector,dirichletCondition,Dx,dx,newmannBorderCondition,ordre);
+stationnary = ComputeStationnary(rightMemberMatrixStationnary,sourceTerm,stateVector,dirichletCondition,newmannBorderCondition,ordre);
 %% Loop 
 %%Initialisation
 t = 0:dt:finalTime; %s

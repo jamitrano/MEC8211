@@ -2,18 +2,18 @@
 close all
 clear
 % Choisir le mode de simulation
-simulationMode =1 ;  % 1 : Solution numérique
+simulationMode =3 ;  % 1 : Solution numérique
 % 2 : Solution Analytique
 % 3 : Comparaison Numérique/ Analytique
-ordre=1;
+ordre=2;
 % Choix des parametres
-N = 5 ; % Number of  Node
-rangeNode = linspace(5,1e2,20); % pour comparaison
+N = 20 ; % Number of  Node
+rangeNode = linspace(5,50,5); % pour comparaison
 diameter = 1; %m
 
-finalTime = 5e9 ; %s
-dt = 1e4;
-convCriteria=1e-10;
+finalTime = 5e4 ; %s
+dt = 1e3;
+convCriteria=1e-7;
 ratioCoeff = 1e-10; %m2/s
 reactionConstant = 0;%4e-9 ; % 1/s
 sourceTerm = 1e-8 ; %mol/m3/s
@@ -28,49 +28,56 @@ numberOfTimeIter = floor(finalTime/dt) ;
 
 switch simulationMode
     case 1 %% Simulation Numérique
-         [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
+        [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
         plot(radiusVector,result(:,end))
+        figure 
+        plot(radiusVector,stationnary)
 
     case 2 %% Solution Analytique
         [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,ratioCoeff,radiusVector);
         plot(radiusVector,analyticResult);
 
-    case 3 
+    case 3
+        L1ErrorVersusOrder = zeros()
         for ordre=1:2
             lNode = length(rangeNode);
             resultOverDx = cell(lNode);
-            vecteurLInf=zeros(length(rangeNode),1);
-            vecteurL1=zeros(length(rangeNode),1);
-            vecteurL2=zeros(length(rangeNode),1);
-    
+            L1Error=zeros(length(rangeNode),1);
+            L2Error=zeros(length(rangeNode),1);
+            LinfError=zeros(length(rangeNode),1);
+
             for i = 1:lNode
                 disp(i)
                 N = floor(rangeNode(i));
-                dirichletCondition = [N,initialConcentration]; 
-                [resultOverTime,convergence(i)] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
-                radiusVector = ((1:N)/N*radius)';
+                dirichletCondition = [N,initialConcentration];
+                [resultOverTime,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
+                if ~convergence
+                    disp("Attention il n'a pas convergence, augmenter le temps max");
+                end
+      
+                radiusVector = linspace(0,diameter/2,N);
                 [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,ratioCoeff,radiusVector);
+                resultOverDx{i,3}= stationnary;
                 resultOverDx{i,1} = resultOverTime(:,end);
                 resultOverDx{i,2} = analyticResult;
-    
+
                 %Création des vecteurs L_inf, L1 et L2
-                
-                vecteurLInf(i)=L_inf(resultOverDx{i,1},resultOverDx{i,2});
-                vecteurL1(i)=L1(resultOverDx{i,1},resultOverDx{i,2},N);
-                vecteurL2(i)=L2(resultOverDx{i,1},resultOverDx{i,2},N);
+                [L1Error(i),L2Error(i),LinfError(i)] = ComputeError(resultOverDx{i,3},resultOverDx{i,2},N);
+           
             end
             
-            elementSize=0.5./floor(rangeNode);
-            loglog (elementSize,vecteurL1,'r', LineWidth=2)
+            elementSize=radius./floor(rangeNode);
+            loglog (elementSize,L1Error)
             hold on
             grid on
-            loglog (elementSize,vecteurL2,'b',LineWidth=2)
-            loglog (elementSize,vecteurLInf,'k',LineWidth=2)
+            loglog (elementSize,L2Error,LineWidth=2)
+            loglog (elementSize,LinfError)
             set(gca, 'XDir','reverse')
             xlabel ('Distance entre les noeuds (m)')
             ylabel('Erreur')
-            legend('L1','L2','Linf')
-            
+
+            legend(strcat('L1-',num2str(i)),'L2','Linf')
+
             title('Progression de l''erreur en fonction de la distance des noeuds')
         end
-    end
+end

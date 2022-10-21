@@ -2,13 +2,14 @@ function [result,convergence,stationnary] =SolverEDP(N,finalTime,numberOfTimeIte
 %%% Calcul généraux 
 stateVector = double(zeros(N,1)); % vecteur d'etat 
 dt = finalTime/numberOfTimeIter;
-dx = diameter/2/N;
-rInv = 1./linspace(0,N,N)./dx;
+dx = diameter/2/(N-1);
+rInv = 1./(linspace(0,N,N)*diameter/(2*N));
 rInv(1)=0;
 if ordre ==1
     backwardTerm = - Deff/(dx*dx).*ones(1,N);
     centralTerm = 2*Deff/(dx*dx) + Deff/dx.*rInv + 1/dt + reactionConstant;
     forwardTerm = -Deff/(dx*dx) -Deff/dx.*rInv;
+
     
 end
 

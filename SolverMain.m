@@ -5,14 +5,14 @@ clear
 simulationMode =3 ;  % 1 : Solution numérique
 % 2 : Solution Analytique
 % 3 : Comparaison Numérique/ Analytique
-ordre=2;
+ordre=1;
 % Choix des parametres
 N = 20 ; % Number of  Node
-rangeNode = linspace(5,1e2,10); % pour comparaison
+rangeNode = linspace(5,50,5); % pour comparaison
 diameter = 1; %m
 
-finalTime = 5e9 ; %s
-dt = 1e4;
+finalTime = 5e4 ; %s
+dt = 1e3;
 convCriteria=1e-7;
 ratioCoeff = 1e-10; %m2/s
 reactionConstant = 0;%4e-9 ; % 1/s
@@ -30,7 +30,7 @@ switch simulationMode
     case 1 %% Simulation Numérique
         [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
         plot(radiusVector,result(:,end))
-        figure 
+        figure
         plot(radiusVector,stationnary)
 
     case 2 %% Solution Analytique
@@ -38,8 +38,12 @@ switch simulationMode
         plot(radiusVector,analyticResult);
 
     case 3
+        lNode = length(rangeNode);
+        L1ErrorVersusOrder = zeros(lNode,2);
+        L2ErrorVersusOrder = zeros(lNode,2);
+        LInfErrorVersusOrder = zeros(lNode,2);
         for ordre=1:2
-            lNode = length(rangeNode);
+
             resultOverDx = cell(lNode);
             L1Error=zeros(length(rangeNode),1);
             L2Error=zeros(length(rangeNode),1);
@@ -51,9 +55,10 @@ switch simulationMode
                 dirichletCondition = [N,initialConcentration];
                 [resultOverTime,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
                 if ~convergence
-                    disp(strcat(["Attention, pour ]",N,"[noeuds, il n'a pas convergence, augmenter le temps max"]));
+                    disp("Attention il n'a pas convergence, augmenter le temps max");
                 end
-                radiusVector = ((1:N)/N*radius)';
+
+                radiusVector = linspace(0,diameter/2,N);
                 [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,ratioCoeff,radiusVector);
                 resultOverDx{i,3}= stationnary;
                 resultOverDx{i,1} = resultOverTime(:,end);
@@ -61,20 +66,29 @@ switch simulationMode
 
                 %Création des vecteurs L_inf, L1 et L2
                 [L1Error(i),L2Error(i),LinfError(i)] = ComputeError(resultOverDx{i,3},resultOverDx{i,2},N);
-           
+
             end
-
-            elementSize=radius./floor(rangeNode);
-            loglog (elementSize,L1Error,'r', LineWidth=2)
-            hold on
-            grid on
-            loglog (elementSize,L2Error,'b',LineWidth=2)
-            loglog (elementSize,LinfError,'k',LineWidth=2)
-            set(gca, 'XDir','reverse')
-            xlabel ('Distance entre les noeuds (m)')
-            ylabel('Erreur')
-            legend('L1','L2','Linf')
-
-            title('Progression de l''erreur en fonction de la distance des noeuds')
+            L1ErrorVersusOrder(:,ordre) = L1Error;
+            L2ErrorVersusOrder(:,ordre) = L2Error;
+            LInfErrorVersusOrder(:,ordre) = LinfError;
         end
+        elementSize=radius./floor(rangeNode);
+        figure
+
+
+        loglog(elementSize,L1ErrorVersusOrder(:,1))
+        grid on
+        hold on
+        loglog (elementSize,L2ErrorVersusOrder(:,1))
+        loglog (elementSize,LInfErrorVersusOrder(:,1))
+        loglog (elementSize,L1ErrorVersusOrder(:,2),"--")
+        loglog (elementSize,L2ErrorVersusOrder(:,2),"--")
+        loglog (elementSize,LInfErrorVersusOrder(:,2),"--")
+        set(gca, 'XDir','reverse')
+        xlabel ('Distance entre les noeuds (m)')
+        ylabel('Erreur (mol/m3)')
+        legend('L1-o1','L2 -o1','Linf-o1','L1-o2','L2 -o2','Linf-o2');
+
+        title('Progression de l''erreur en fonction de la distance des noeuds')
+        hold off
 end
