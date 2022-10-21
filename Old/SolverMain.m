@@ -3,39 +3,51 @@ close all
 clear
 % Choisir le mode de simulation
 simulationMode =1 ;  % 1 : Solution numérique
+ordre=1;
 % 2 : Solution Analytique
 % 3 : Comparaison Numérique/ Analytique
-ordre=1;
+
 % Choix des parametres
-N = 5 ; % Number of  Node
+N = 20 ; % Number of  Node
 rangeNode = linspace(5,1e2,20); % pour comparaison
 diameter = 1; %m
 
-finalTime = 5e9 ; %s
-dt = 1e4;
-convCriteria=1e-10;
+radiusVector = linspace(0,diameter/2,N);
 ratioCoeff = 1e-10; %m2/s
 reactionConstant = 0;%4e-9 ; % 1/s
-sourceTerm = 1e-8 ; %mol/m3/s
+sourceTerm =  1e-8 ; %mol/m3/s
 initialConcentration = 10 ; % mol/m3
-%% For calculations
-radius = diameter*0.5;
-radiusVector = linspace(0,radius,N);
 newmannBorderCondition = [1,0];
 dirichletCondition = [N,initialConcentration];
+finalTime = 5e10 ; %s
+numberOfTimeIter = 1e8 ;
+%dt=finalTime/numberOfTimeIter;
+dt = 1e3;
+convCriteria=1e-7;
 
-numberOfTimeIter = floor(finalTime/dt) ;
 
-switch simulationMode
-    case 1 %% Simulation Numérique
-         [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
-        plot(radiusVector,result(:,end))
-
-    case 2 %% Solution Analytique
-        [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,ratioCoeff,radiusVector);
+if  (simulationMode == 2 )
+    %% Solution Analytique
+    [analyticResult] = AnalyticSolution(sourceTerm,diameter/2,initialConcentration,ratioCoeff,radiusVector);
         plot(radiusVector,analyticResult);
-
-    case 3 
+end
+    if (simulationMode == 1 )
+         [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
+        %% Display
+%         t = 0:dt:size(result,2)*dt-1; %s
+%         dx = diameter/2/N;
+%         [x,y ] = meshgrid(t,(1:N).*dx);
+%         figure(3);
+%         fig =mesh(x,y,result);
+%         title('Titre');
+%         xlabel('Temps (s)');
+%         ylabel('Distance');
+%         zlabel('Concentration');
+        figure
+        plot(radiusVector,result(:,end))
+        %plot(radiusVector,stationnary)
+    end
+    if  (simulationMode == 3 )
         for ordre=1:2
             lNode = length(rangeNode);
             resultOverDx = cell(lNode);
@@ -48,8 +60,8 @@ switch simulationMode
                 N = floor(rangeNode(i));
                 dirichletCondition = [N,initialConcentration]; 
                 [resultOverTime,convergence(i)] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,ratioCoeff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre);
-                radiusVector = ((1:N)/N*radius)';
-                [analyticResult] = AnalyticSolution(sourceTerm,radius,initialConcentration,ratioCoeff,radiusVector);
+                radiusVector = ((1:N)/N*diameter/2)';
+                [analyticResult] = AnalyticSolution(sourceTerm,diameter/2,initialConcentration,ratioCoeff,radiusVector);
                 resultOverDx{i,1} = resultOverTime(:,end);
                 resultOverDx{i,2} = analyticResult;
     

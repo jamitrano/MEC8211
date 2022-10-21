@@ -1,4 +1,4 @@
-function [newStateVector] = EulerImplicitSolverStep(rightMember,constantTerm,dt,stateVector,dirichletCondition,newmannCondition,ordre)
+function [newStateVector] = EulerImplicitSolverStep(Dx,dx,rightMember,constantTerm,dt,stateVector,dirichletCondition,newmannCondition,ordre)
 %% Solver df/dt = rightMember*f + constantTerm ; avec une méthode  d'euler implicte 
 %% INPUT 
 % rightMember  | (N,N) Partie linéaire de l'équation différentielle
@@ -11,10 +11,11 @@ function [newStateVector] = EulerImplicitSolverStep(rightMember,constantTerm,dt,
 %% OUTPUT 
 % newStateVector | (N,1) vecteur d'etat modifié au temps t + dt 
 
-stateVector = stateVector./dt - constantTerm;
-[rightMember,stateVector] = AddNewmannBorderCondition(rightMember,stateVector,newmannCondition,ordre);
-[stateVector,rightMember] = AddDirichletBorderCondition(stateVector,rightMember,dirichletCondition);
- newStateVector = rightMember\ stateVector ;
+rightMember = -rightMember.*dt + eye(size(rightMember));
+stateVector = stateVector - dt.*constantTerm;
+ [rightMember,stateVector] = AddNewmannBorderCondition(rightMember,stateVector,Dx,dx,newmannCondition,ordre);
+ [stateVector,rightMember] = AddDirichletBorderCondition(stateVector,rightMember,dirichletCondition);
+  newStateVector = rightMember\ stateVector ;
 
 end
 
