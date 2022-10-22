@@ -7,17 +7,17 @@ simulationMode =4 ;  % 1 : Solution numérique
 % 3 : Comparaison Numérique/ Analytique
 ordre=2;
 % Choix des parametres
-N = 200 ; % Number of  Node
+N = 1000 ; % Number of  Node
 rangeNode = linspace(5,100,5); % pour comparaison
 diameter = 1; %m
 
 finalTime = 1e5 ; %s
 dt = 1e3;
 convCriteria=1e-7;
-MNPcriterion = 1e-9;
+MNPcriterion = 1e-7;
 Deff = 1e-10; %m2/s
-reactionConstant = 0;%4e-9 ; % 1/s
-sourceTerm = 1e-8 ; %mol/m3/s
+reactionConstant = 4e-9 ; % 1/s
+sourceTerm = 0 ; %mol/m3/s
 initialConcentration = 10 ; % mol/m3
 %% For calculations
 radius = diameter*0.5;
@@ -97,7 +97,7 @@ switch simulationMode
         [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre);
         % fit 
         radiusVector = linspace(0,diameter/2,N);
-        p=fit(radiusVector',stationnary,'poly3');
+        p=fit(radiusVector',stationnary,'pchipinterp');
         % Calcul de la difference 
         stateVector = feval(p,radiusVector);
         [~,L2Error,~] = ComputeError(stationnary,stateVector,N);
