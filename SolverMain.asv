@@ -93,15 +93,27 @@ switch simulationMode
         title('Progression de l''erreur en fonction de la distance des noeuds')
         hold off
     case 4 %% MNP
-        error = ComputeMNP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,MNPcriterion);
-        if  isa(error,'string')
-            disp(error);
-        else
-            figure
-            plot(radiusVector,error)
-            title('Erreur par la méthode MNP')
-            xlabel('Distance au centre (m)');
-            ylabel('Erreur de discrétisation')
+        % Calcul avec maillage fin
+        [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre);
+        % fit 
+        radiusVector = linspace(0,diameter/2,N);
+        p=fit(radiusVector',stationnary,'pchipinterp');
+        % Calcul de la difference 
+        stateVector = feval(p,radiusVector);
+        [~,L2Error,~] = ComputeError(stationnary,stateVector,N);
+        if ~(L2Error<MNPcriterion)
+            disp("L'erreur entre la courbe extrapolée et les données numériques est trop grande")
+        else 
+            %Numerical Solution to Nearby Problem
+ [d1,d2] = differentiate(p,radiusVector);       
+ rInv = 1./(linspace(0,N,N)*diameter/(2*N));
+ rInv(1)=0;
+ error = Deff*(d2 + rInv'.*d1) - sourceTerm .*ones(N,1);
+ figure
+ plot(radiusVector,error)
+ title('Erreur par la méthode MNP')
+ xlabel('Distance au centre (m)');
+ ylabel('Erreur de discrétisation')
         end
 
 end
