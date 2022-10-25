@@ -2,9 +2,11 @@
 close all
 clear
 % Choisir le mode de simulation
-simulationMode =4 ;  % 1 : Solution numérique
-% 2 : Solution Analytique
-% 3 : Comparaison Numérique/ Analytique
+simulationMode =5 ;  % 1 : Solution numérique
+                     % 2 : Solution Analytique
+                     % 3 : Comparaison Numérique/ Analytique
+                     % 4 : MNP
+                     % 5 : MMS
 ordre=2;
 % Choix des parametres
 N = 1000 ; % Number of  Node
@@ -109,5 +111,6 @@ switch simulationMode
             xlabel('Temps (s)');
             ylabel('Erreur de discrétisation temporelle')
         end
-
+    case 5 %% MMS
+        [analyticSolution,sourceTerm] = ComputeMMS(reactionConstant,Deff);
 end
