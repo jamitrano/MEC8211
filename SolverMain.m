@@ -100,16 +100,20 @@ switch simulationMode
             disp(error);
         else
             figure
+            grid on 
             timeVector  = linspace(0,finalTime,length(errorTime));
-            plot(radiusVector,errorSpace)
+            loglog(radiusVector,errorSpace)
             title('Erreur par la méthode MNP')
             xlabel('Distance au centre (m)');
             ylabel('Erreur de discrétisation spatiale')
+            set(gca, 'XDir','reverse')
             figure
-            plot(timeVector,errorTime)
+            grid on 
+            loglog(timeVector,errorTime)
             title('Erreur par la méthode MNP')
             xlabel('Temps (s)');
             ylabel('Erreur de discrétisation temporelle')
+            set(gca, 'XDir','reverse')
         end
     case 5 %% MMS
         [analyticSolution,sourceTerm] = ComputeMMS(reactionConstant,Deff);
