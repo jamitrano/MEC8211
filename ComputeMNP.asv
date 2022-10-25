@@ -1,4 +1,4 @@
-function [errorSpace,errorTime] = ComputeMNP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,MNPcriterion)
+function [error] = ComputeMNP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,MNPcriterion)
 %COMPUTEMNP Summary of this function goes here
 %% Calcul en espace et en temps
 
@@ -19,11 +19,11 @@ if ~(L2ErrorSpace<MNPcriterion && L2ErrorTime < MNPcriterion)
 else
     %Numerical Solution to Nearby Problem
     [d1,d2] = differentiate(polynomSpace,radiusVector);
-    [t1 ] = differentiate(polynomTime,timeVector);
+    [t1 ]
     rInv = 1./(linspace(0,N,N)*diameter/(2*N));
     rInv(1)=0;
-    errorSpace = Deff*(d2 + rInv'.*d1)  - reactionConstant.*stateVectorSpace -  sourceTerm .*ones(N,1);
-    errorTime = t1 - reactionConstant.*stateVectorTime -  sourceTerm ;
+    error = Deff*(d2 + rInv'.*d1)  - reactionConstant.*stateVectorSpace -  sourceTerm .*ones(N,1);
+    errorTime =  - reactionConstant.*stateVectorTime -  sourceTerm .*ones(N,1);
 end
 end
 

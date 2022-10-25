@@ -93,15 +93,21 @@ switch simulationMode
         title('Progression de l''erreur en fonction de la distance des noeuds')
         hold off
     case 4 %% MNP
-        error = ComputeMNP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,MNPcriterion);
-        if  isa(error,'string')
+        [errorSpace,errorTime] = ComputeMNP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,MNPcriterion);
+        if  isa(errorSpace,'string')
             disp(error);
         else
             figure
-            plot(radiusVector,error)
+            timeVector  = linspace(0,finalTime,length(errorTime));
+            plot(radiusVector,errorSpace)
             title('Erreur par la méthode MNP')
             xlabel('Distance au centre (m)');
-            ylabel('Erreur de discrétisation')
+            ylabel('Erreur de discrétisation spatiale')
+            figure
+            plot(timeVector,errorTime)
+            title('Erreur par la méthode MNP')
+            xlabel('Temps (s)');
+            ylabel('Erreur de discrétisation temporelle')
         end
 
 end
