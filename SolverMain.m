@@ -29,6 +29,10 @@ dirichletCondition = [N,initialConcentration];
 
 numberOfTimeIter = floor(finalTime/dt) ;
 
+%% Define u
+syms t r
+analyticSolution =  exp(t)*sin(pi*r/radius);
+
 switch simulationMode
     case 1 %% Simulation Numérique
         [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre);
@@ -116,5 +120,5 @@ switch simulationMode
             set(gca, 'XDir','reverse')
         end
     case 5 %% MMS
-        [analyticSolution,sourceTerm] = ComputeMMS(reactionConstant,Deff);
+        [analyticSolution,sourceTerm] = ComputeMMS(reactionConstant,Deff,analyticSolution);
 end
