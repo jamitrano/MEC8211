@@ -1,0 +1,11 @@
+function stationnary = ComputeStationnary(rightMemberMatrix,sourceTerm,stateVector,dirichletCondition,newmannCondition,ordre)
+%% Calcul de la concentration en fonction des noeuds à l'etat stationnaire 
+%% INPUT 
+%rightMemberMatrix,sourceTerm,stateVector,dirichletCondition,newmannCondition,ordre
+%% OUPUT 
+
+ [rightMember,stateVector] = AddNewmannBorderCondition(rightMemberMatrix,stateVector,newmannCondition,ordre);
+ [stateVector,rightMember] = AddDirichletBorderCondition(stateVector,rightMember,dirichletCondition);
+ stationnary = rightMember\(-sourceTerm + stateVector);
+end
+

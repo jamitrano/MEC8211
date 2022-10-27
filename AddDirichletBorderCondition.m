@@ -1,12 +1,17 @@
 function [stateVector,rightMember] = AddDirichletBorderCondition(stateVector,rightMember,dirichletCondition)
-%% Ajoute les conditions de dirichlet en modifiant le vecteur d'etat
+%% Ajoute les conditions de dirichlet en modifiant le vecteur d'etat X ainsi que la matrice A telle que AX = B
+% La ligne correspondante à la condition est mise à 0 sauf sur la diagonale
+% où elle vaut 1.
 %% INPUT 
 % stateVector | (N,1) vecteur d'etat au temps t 
 % dirichletCondition | (M,2) avec M<=N , tel que pour toute ligne i de la
 %                    | matrice dirichletCondition(i,1) soit le numero du noeud modififé et (i,2)
 %                    | la nouvelle valeur
+% rightMember        | (N,N) Matrice de l'équation
 %% OUTPUT 
 % stateVector | (N,1) vecteur d'etat modifié au temps t 
+% rightMember        | (N,N) Matrice de l'équation modifié pour prendre en
+% compte les conditions de Dirichlet.
     for i= size(dirichletCondition,1)
         idx = dirichletCondition(i,1);
         stateVector(idx) = dirichletCondition(i,2);

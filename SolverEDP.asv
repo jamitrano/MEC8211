@@ -1,32 +1,23 @@
 function [result,convergence,stationnary] =SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre,saveTime)
 %% Fonction auxilliaire permettant de résoudre l'équation aux dérivées partielle 
 %% INPUT
-% finalTime          | Temps final max s'il n'a pas convergence
-% numberOfTimeIter   | Nombre d'itérations temporelle 
-% convCriteria       | Critère de convergence pour la résolution numérique
-% diameter           | Scalaire - Diamètre du pilier 
-% N                  | Nombre de noeuds
-% Deff               | Scalaire - Coefficient de diffusion
-% reactionConstant   | Scalaire -  Coefficient d'absortion 
-% sourceTerm         | Scalaire - Terme source constant (mol/s)
+%N
+% finalTime
+% numberOfTimeIter
+% convCriteria
+% diameter
+% Deff
+% reactionConstant
+% sourceTerm
 % dirichletCondition | (M,2) avec M<=N , tel que pour toute ligne i de la
 %                    | matrice dirichletCondition(i,1) soit le numero du noeud modififé et (i,2)
 %                    | la nouvelle valeur
 % newmannCondition   | (M,2) avec M<=N , tel que pour toute ligne i de la
 %                    | matrice newmannCondition(i,1) soit le numero du noeud modififé et (i,2)
 % ordre              | 1 ou 2 suivant le schema de differentiation choisie
-% saveTime           | Scalaire - A 0 si on veut un resultat en espace et
-%                    | non en temps
-%                    | A M <= N pour avoir une resultat en temps au noeud M
+% saveTime           | Scalaire - A 0 si on veut un resultat en espace 
 
-%% OUTPUT 
-% result      | Si saveTime = 0, renvoie (N,1) resultat de la simulation au
-%             | temps final ou à la convergence. Sinon renvoie (T,1) , resultat de la
-%             |simulation en fonction du temps au noeud saveTime
-% convergence | 1 si le resultat à converger, 0 sinon 
-% stationnary | (N,1) résultat stationnaire en espace
-
-%% Calcul généraux 
+%%% Calcul généraux 
 stateVector = double(zeros(N,1)); % vecteur d'etat 
 dt = finalTime/numberOfTimeIter;
 [rightMemberMatrix,rightMemberMatrixStationnary] = ComputeRightMemberMatrix(diameter,N,Deff,reactionConstant,dt,ordre);
