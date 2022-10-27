@@ -3,7 +3,7 @@ function [analyticSolution,sourceTerm] = ComputeMMS(K,Deff,analyticSolution)
 %% Une solution de l'équation (L(u) = sourceTerm)
 
 %% INPUT 
-% K                | Coefficient d'absortion 
+% K                | Coefficient d'absorption 
 % Deff             | Coefficient de diffusion 
 % analyticSolution | Fonction symbolique f(r,t) devant être solution de
 %                  |l'EDP modifiée
@@ -13,14 +13,16 @@ function [analyticSolution,sourceTerm] = ComputeMMS(K,Deff,analyticSolution)
 % sourceTerm       | Fonction symbolique f(r,t) representant le terme
 %                  | source pour modifier l'EDP initale
 
+C=analyticSolution;
 
 % Define syms 
-syms r t C ;
+syms r t ;
 % Define EDP
-EDP =  diff(C,t) -  Deff .*(diff(diff(C,r),r) + 1/r *diff(C,r)) + K*C;
+EDP =  diff(C,t) -Deff*(diff(C,r,2)+1/r *diff(C,r))+K*C;
 
 % Apply u to EDP
-sourceTerm = matlabFunction(compose(EDP,analyticSolution));
-analyticSolution = matlabFunction(analyticSolution);
+analyticSolution = matlabFunction(C);
+sourceTerm = matlabFunction(EDP);
+
 end
 
