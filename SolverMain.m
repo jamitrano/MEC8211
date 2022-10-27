@@ -13,7 +13,7 @@ N = 1000 ; % Number of  Node
 rangeNode = linspace(5,100,5); % pour comparaison
 diameter = 1; %m
 
-finalTime = 1e5 ; %s
+finalTime = 1e9 ; %s
 dt = 1e3;
 convCriteria=1e-7;
 MNPcriterion = 1e-7;
@@ -30,8 +30,8 @@ dirichletCondition = [N,initialConcentration];
 numberOfTimeIter = floor(finalTime/dt) ;
 
 %% Define u
-syms t r
-analyticSolution =  exp(t)*sin(pi*r/radius);
+syms t r 
+analyticSolution =  10*(1/radius^4)*(r*(r-radius))^2*exp(t) +10;
 
 switch simulationMode
     case 1 %% Simulation Numérique
