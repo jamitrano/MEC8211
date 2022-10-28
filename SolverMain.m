@@ -9,7 +9,7 @@ close all
 clear
 %%%%%%%%%%%%%%%%% PARAMETRES %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Choisir le mode de simulation
-simulationMode =5 ;  % 1 : Solution numérique
+simulationMode =4 ;  % 1 : Solution numérique
                      % 2 : Solution Analytique
                      % 3 : Comparaison Numérique/ Analytique
                      % 4 : MNP
@@ -17,10 +17,10 @@ simulationMode =5 ;  % 1 : Solution numérique
 ordre=2;
 N = 100 ; % Number of  Node
 rangeNode = linspace(5,100,5); % pour comparaison (simulationMode 3)
-diameter = 1; %m
-finalTime = 1e13 ; %s
-dt = 1e7; %s
-convCriteria=1e-7;
+diameter = 1; %
+finalTime = 1e9 ; %s
+dt = 1e4; %s
+convCriteria=1e-4;%1e-2;
 MNPcriterion = 1e-7;
 Deff = 1e-10; %m2/s
 reactionConstant = 4e-9 ; % 1/s
@@ -29,14 +29,13 @@ initialConcentration = 10 ; % mol/m3
 % Conditions aux limites 
 newmannCondition = [1,0];
 dirichletCondition = [N,initialConcentration];
+radius = diameter*0.5;
 
 % Solution analytique pour MMS
 syms t r 
-radius = diameter*0.5;
-% analyticSolution(r,t) =  10*(1/radius^4).*(r.*(r-radius)).^2*exp(t*1e-9)) +10;
-analyticSolution(r,t)=(radius^2-r.^2) .*exp(t/1e9)+10;
+analyticSolution(r,t)=-10.*(radius.^2-r.^2) .*exp(t./finalTime)+10;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+%fsurf(analyticSolution,[0 radius 0 finalTime])
 
 %% Calculs généraux 
 radiusVector = linspace(0,radius,N);
@@ -46,9 +45,15 @@ numberOfTimeIter = floor(finalTime/dt) ;
 switch simulationMode
     case 1 %% Simulation Numérique
         [result,convergence,stationnary] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,0);
+        if ~convergence
+            warning ('Il n''y a pas eu convergence')
+        end 
         plot(radiusVector,result(:,end))
-        figure
-        plot(radiusVector,stationnary)
+        %figure
+        %plot(radiusVector,stationnary)
+        if min(result(:,2))~= result(1,2)
+            disp('panic')
+        end
 
  
     case 2 %% Solution Analytique
@@ -115,9 +120,9 @@ switch simulationMode
         if  isa(errorSpace,'string')
             disp(errorSpace);
         else
-            % Affichage 
+            % Affichage
             figure
-            grid on 
+            grid on
             timeVector  = linspace(0,finalTime,length(errorTime));
             loglog(radiusVector,errorSpace)
             title('Erreur par la méthode MNP')
@@ -135,32 +140,38 @@ switch simulationMode
     case 5 %% MMS
         [analyticSolution,residuMMS] = ComputeMMS(reactionConstant,Deff,analyticSolution);
         %% Verification en temps
-        numberNode = N/2;
-        timeVector  = linspace(0,finalTime,finalTime/dt)';
+        numberNode = 6 ;%floor(N/2);
+        timeVector  = linspace(0,finalTime,finalTime/dt+1)';
+        MMSSolution = analyticSolution(radiusVector,timeVector)';
         sourceTerm = residuMMS(radiusVector,timeVector)';
+        conditionInitiale = MMSSolution(:,1);
 
-        [result,convergence,~] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,numberNode);
+        [result,convergence,~] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,numberNode,conditionInitiale);
         if ~convergence
             warning ('Il n''y a pas eu convergence')
         end 
 
-        % Application solution analytique sur le maillage
-        
-        MMSSolution = analyticSolution(radiusVector(numberNode),timeVector(1:length(result)));
-        % Appliquer EDP sur MMS Solution 
+        % Application solution analytique sur le maillage        
+        solutionCompare = MMSSolution(numberNode,1:length(result))';
 
         % Comparer resultat au résidu 
-        [~,L2ErrorTime,~] = ComputeError(result,MMSSolution,length(result))
+        [~,L2ErrorTime,~] = ComputeError(result,solutionCompare,length(result));
+        disp(L2ErrorTime)
+
         %% Verification en espace 
         % Application solution analytique sur le maillage 
         timeMMS = 1e5; %s
         [result,convergence,~] = SolverEDP(N,timeMMS,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,0);
-        MMSSolution = analyticSolution(radiusVector,timeMMS)';
-        % Appliquer EDP sur MMS Solution 
-        %% TODO
+        if ~convergence
+            warning ('Il n''y a pas eu convergence')
+        end 
+
+        solutionCompare = MMSSolution(:,1+timeMMS/dt);
+
         % Comparer le resultat 
-        [~,L2ErrorSpace,~] = ComputeError(result(:,2),MMSSolution,length(result))
+        [~,L2ErrorSpace,~] = ComputeError(result(:,2),solutionCompare,length(result));
 %       [~,L2ErrorSpace,~] = ComputeError(result(2:end,2)-residu(2:end),MMSSolution(2:end),length(residu))
         
+        disp(L2ErrorSpace)
 
 end

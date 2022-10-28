@@ -1,4 +1,4 @@
-function [result,convergence,stationnary] =SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre,saveTime)
+function [result,convergence,stationnary] =SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannBorderCondition,ordre,saveTime,conditionsInitiales)
 %% Fonction auxilliaire permettant de résoudre l'équation aux dérivées partielle 
 %% INPUT
 % finalTime          | Temps final max s'il n'a pas convergence
@@ -27,7 +27,11 @@ function [result,convergence,stationnary] =SolverEDP(N,finalTime,numberOfTimeIte
 % stationnary | (N,1) résultat stationnaire en espace
 
 %% Calcul généraux 
-stateVector = double(zeros(N,1)); % vecteur d'etat 
+if ~exist('conditionsInitiales','var')
+    stateVector = double(zeros(N,1)); % vecteur d'etat 
+else
+    stateVector = conditionsInitiales;
+end
 dt = finalTime/numberOfTimeIter;
 [rightMemberMatrix,rightMemberMatrixStationnary] = ComputeRightMemberMatrix(diameter,N,Deff,reactionConstant,dt,ordre);
 stationnary=0;
@@ -41,10 +45,12 @@ end
 t = 0:dt:finalTime; %s
 %nbIter = length(t);
 result = zeros(length(stateVector),2);
+[result(:,1),~]=AddDirichletBorderCondition(stateVector,rightMemberMatrix,dirichletCondition);
 i=1;
 delta(i)=1;
 if saveTime ~=0
     resultOverTime = zeros(length(t),1);
+    resultOverTime(i) = result(saveTime,1);
 end
 %%
 while t(i)<finalTime && delta(i)>convCriteria
@@ -52,7 +58,7 @@ while t(i)<finalTime && delta(i)>convCriteria
     stateVector = EulerImplicitSolverStep(rightMemberMatrix,sourceTerm(:,i),dt,stateVector,dirichletCondition,newmannBorderCondition,ordre);
     result(:,2) = stateVector;
     if saveTime ~=0
-    resultOverTime(i+1) = result(saveTime,2);
+        resultOverTime(i+1) = result(saveTime,2);
     end
     i=i+1;
     delta(i)=max(max(abs(result(:,1)./result(:,2)-1)));
