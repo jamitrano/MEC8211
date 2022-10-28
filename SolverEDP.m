@@ -30,9 +30,12 @@ function [result,convergence,stationnary] =SolverEDP(N,finalTime,numberOfTimeIte
 stateVector = double(zeros(N,1)); % vecteur d'etat 
 dt = finalTime/numberOfTimeIter;
 [rightMemberMatrix,rightMemberMatrixStationnary] = ComputeRightMemberMatrix(diameter,N,Deff,reactionConstant,dt,ordre);
+stationnary=0;
+if  isscalar(sourceTerm)
+    sourceTerm = sourceTerm .*ones(N,numberOfTimeIter);
+    stationnary = ComputeStationnary(rightMemberMatrixStationnary,sourceTerm(:,1),stateVector,dirichletCondition,newmannBorderCondition,ordre);
+end
 
-sourceTerm = sourceTerm .*ones(N,1);
-stationnary = ComputeStationnary(rightMemberMatrixStationnary,sourceTerm,stateVector,dirichletCondition,newmannBorderCondition,ordre);
 %% Loop 
 %%Initialisation
 t = 0:dt:finalTime; %s
@@ -45,12 +48,11 @@ if saveTime ~=0
 end
 %%
 while t(i)<finalTime && delta(i)>convCriteria
-    
     result(:,1) = result(:,2);
-    stateVector = EulerImplicitSolverStep(rightMemberMatrix,sourceTerm,dt,stateVector,dirichletCondition,newmannBorderCondition,ordre);
+    stateVector = EulerImplicitSolverStep(rightMemberMatrix,sourceTerm(:,i),dt,stateVector,dirichletCondition,newmannBorderCondition,ordre);
     result(:,2) = stateVector;
     if saveTime ~=0
-    resultOverTime(i) = result(saveTime,2);
+    resultOverTime(i+1) = result(saveTime,2);
     end
     i=i+1;
     delta(i)=max(max(abs(result(:,1)./result(:,2)-1)));
@@ -61,7 +63,8 @@ if delta(i)>convCriteria
 else
     convergence=1;
 end
+
 if saveTime ~=0
-    result = resultOverTime;
+    result = resultOverTime (1:i);
 end
 end

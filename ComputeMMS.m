@@ -17,12 +17,15 @@ C=analyticSolution;
 
 % Define syms 
 syms r t ;
-% Define EDP
-EDP =  diff(C,t) -Deff*(diff(C,r,2)+1/r *diff(C,r))+K*C;
+
+
+EDP = diff(C,t)  -Deff.*(diff(C,r,2)+1/r .*diff(C,r))+K.*C;
 
 % Apply u to EDP
 analyticSolution = matlabFunction(C);
 sourceTerm = matlabFunction(EDP);
+
+
 
 end
 
