@@ -9,14 +9,14 @@ close all
 clear
 %%%%%%%%%%%%%%%%% PARAMETRES %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Choisir le mode de simulation
-simulationMode =4 ;  % 1 : Solution numérique
+simulationMode =5 ;  % 1 : Solution numérique
                      % 2 : Solution Analytique
                      % 3 : Comparaison Numérique/ Analytique
                      % 4 : MNP
                      % 5 : MMS
 ordre=2;
 N = 100 ; % Number of  Node
-rangeNode = linspace(5,100,5); % pour comparaison (simulationMode 3)
+rangeNode = linspace(10,100,5); % pour comparaison (simulationMode 3)
 diameter = 1; %
 finalTime = 1e9 ; %s
 dt = 1e4; %s
@@ -33,10 +33,12 @@ radius = diameter*0.5;
 
 % Solution analytique pour MMS
 syms t r 
-analyticSolution(r,t)=-10.*(radius.^2-r.^2) .*exp(t./finalTime)+10;
+analyticSolution(r,t)=(radius.^2-r.^2) .*exp(t./finalTime)+10;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%fsurf(analyticSolution,[0 radius 0 finalTime])
-
+figure
+fsurf(analyticSolution,[0 radius 0 finalTime])
+figure
+fplot((radius.^2-r.^2)+10, [0 0.5])
 %% Calculs généraux 
 radiusVector = linspace(0,radius,N);
 numberOfTimeIter = floor(finalTime/dt) ;
@@ -51,9 +53,6 @@ switch simulationMode
         plot(radiusVector,result(:,end))
         %figure
         %plot(radiusVector,stationnary)
-        if min(result(:,2))~= result(1,2)
-            disp('panic')
-        end
 
  
     case 2 %% Solution Analytique
@@ -138,40 +137,65 @@ switch simulationMode
           
         end
     case 5 %% MMS
+        lNode = length(rangeNode);
         [analyticSolution,residuMMS] = ComputeMMS(reactionConstant,Deff,analyticSolution);
-        %% Verification en temps
-        numberNode = 6 ;%floor(N/2);
-        timeVector  = linspace(0,finalTime,finalTime/dt+1)';
-        MMSSolution = analyticSolution(radiusVector,timeVector)';
-        sourceTerm = residuMMS(radiusVector,timeVector)';
-        conditionInitiale = MMSSolution(:,1);
+        for i=1 : lNode    
+            disp(i)
+            %% Verification en temps
+            N=floor(rangeNode(i));
+            dirichletCondition = [N,initialConcentration];
+            radiusVector = linspace(0,radius,N);
+            numberNode =floor(N/2);
+            timeVector  = linspace(0,finalTime,finalTime/dt+1)';
+            MMSSolution = analyticSolution(radiusVector,timeVector)';
+            sourceTerm = residuMMS(radiusVector,timeVector)';
+            conditionInitiale = MMSSolution(:,1);
+    
+            [result,convergence,~] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,numberNode,conditionInitiale);
+            if ~convergence
+                warning ('Il n''y a pas eu convergence')
+            end 
+    
+            % Application solution analytique sur le maillage        
+            solutionCompare = MMSSolution(numberNode,1:length(result))';
+    
+            % Comparer resultat au résidu 
+            [~,L2ErrorTime(i),~] = ComputeError(result,solutionCompare,length(result));
+            
 
-        [result,convergence,~] = SolverEDP(N,finalTime,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,numberNode,conditionInitiale);
-        if ~convergence
-            warning ('Il n''y a pas eu convergence')
-        end 
+        end
+        figure
+        loglog(0.5./rangeNode,L2ErrorTime)
+        grid on
+        title('Erreur temporelle au noeud milieu par la méthode MMS pour différentes discrétisations')
+        xlabel('Distance entre les noeuds (m)');
+        ylabel('Erreur de discrétisation')
+        set(gca, 'XDir','reverse')
 
-        % Application solution analytique sur le maillage        
-        solutionCompare = MMSSolution(numberNode,1:length(result))';
+        rangeTime = linspace(dt*10,finalTime,5);
+        for i=1 : length(rangeTime)
+            disp(i)
+            %% Verification en espace 
+            % Application solution analytique sur le maillage 
+            timeMMS = floor(rangeTime(i)); %s
+            [result,convergence,~] = SolverEDP(N,timeMMS,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,0,conditionInitiale);
+            if ~convergence
+                warning ('Il n''y a pas eu convergence')
+            end 
+    
+            solutionCompare = MMSSolution(:,round(1+timeMMS/dt));
 
-        % Comparer resultat au résidu 
-        [~,L2ErrorTime,~] = ComputeError(result,solutionCompare,length(result));
-        disp(L2ErrorTime)
+            % Comparer le resultat 
+            [~,L2ErrorSpace(i),~] = ComputeError(result(:,2),solutionCompare,length(result)); 
+        end
 
-        %% Verification en espace 
-        % Application solution analytique sur le maillage 
-        timeMMS = 1e5; %s
-        [result,convergence,~] = SolverEDP(N,timeMMS,numberOfTimeIter,convCriteria,diameter,Deff,reactionConstant,sourceTerm,dirichletCondition,newmannCondition,ordre,0);
-        if ~convergence
-            warning ('Il n''y a pas eu convergence')
-        end 
-
-        solutionCompare = MMSSolution(:,1+timeMMS/dt);
-
-        % Comparer le resultat 
-        [~,L2ErrorSpace,~] = ComputeError(result(:,2),solutionCompare,length(result));
-%       [~,L2ErrorSpace,~] = ComputeError(result(2:end,2)-residu(2:end),MMSSolution(2:end),length(residu))
-        
-        disp(L2ErrorSpace)
+        figure       
+        loglog(0.5./rangeNode,L2ErrorSpace)
+        grid on
+        title('Erreur spatiale par la méthode MMS pour différents arrêts de temps')
+        xlabel('Temps (s)');
+        ylabel('Erreur de discrétisation')
+        set(gca, 'XDir','reverse')
+       
 
 end
